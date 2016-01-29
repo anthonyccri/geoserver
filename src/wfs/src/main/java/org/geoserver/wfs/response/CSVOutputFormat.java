@@ -4,8 +4,7 @@
  */
 package org.geoserver.wfs.response;
 
-import com.google.common.escape.Escaper;
-import com.google.common.escape.Escapers;
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.xsd.XSDElementDeclaration;
 import org.eclipse.xsd.impl.XSDElementDeclarationImpl;
 import org.geoserver.config.GeoServer;
@@ -226,6 +225,8 @@ public class CSVOutputFormat extends WFSGetFeatureOutputFormat {
                     formatters[i] = sqlTimeFormatter;
                 } else if (java.util.Date.class.isAssignableFrom(binding)) {
                     formatters[i] = juDateFormatter;
+                } else if (com.vividsolutions.jts.geom.Point.class.isAssignableFrom(binding)) {
+                    formatters[i] = geomFormatter;
                 } else {
                     formatters[i] = defaultFormatter;
                 }
@@ -290,6 +291,14 @@ public class CSVOutputFormat extends WFSGetFeatureOutputFormat {
 
     private static AttrFormatter defaultFormatter = new DefaultFormatter();
 
+    private static class GeomFormatter implements AttrFormatter {
+        @Override
+        public String format(Object att) {
+            return att.toString();
+        }
+    }
+    private static AttrFormatter geomFormatter = new GeomFormatter();
+
     private String formatToString(Object att, NumberFormat coordFormatter) {
         String value;
         if (att instanceof Number) {
@@ -311,8 +320,10 @@ public class CSVOutputFormat extends WFSGetFeatureOutputFormat {
         return value;
     }
 
-    private static Escaper escaper =  Escapers.builder().addEscape('"', "\"\"").build();
 
+
+
+    private static Pattern MOD_PAT = Pattern.compile(".*(\"|\n|,).*");
     /*
      * The CSV "spec" explains that fields with certain properties must be
      * delimited by double quotes, and also that double quotes within fields
@@ -321,12 +332,12 @@ public class CSVOutputFormat extends WFSGetFeatureOutputFormat {
      */    
     private static String prepCSVField(String field){
     	// "embedded double-quote characters must be represented by a pair of double-quote characters."
-        String mod = escaper.escape(field);
+        String mod = StringUtils.replaceChars(field, "\"", "\"\"");
 
     	/*
     	 * Enclose string in double quotes if it contains double quotes, commas, or newlines
     	 */
-    	if(mod.matches(".*(\"|\n|,).*")){
+    	if(MOD_PAT.matcher(mod).find()) {
     		mod = "\"" + mod + "\"";
     	}
     	

@@ -25,6 +25,7 @@ import org.geotools.feature.type.DateUtil;
 import org.junit.Test;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
@@ -97,6 +98,7 @@ public class CSVOutputFormatTest extends WFSTestSupport {
         MemoryDataStore data = new MemoryDataStore();
         data.addFeature(f1);
         data.addFeature(f2);
+        data.addFeature(f3);
         SimpleFeatureSource fs = data.getFeatureSource("funnyLabels");
         
         // build the request objects and feed the output format
